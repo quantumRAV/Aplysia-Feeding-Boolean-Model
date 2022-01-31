@@ -72,6 +72,7 @@ classdef AplysiaFeeding
         B40B30
         B31B32
         B6B9B3
+        B6B9B3_B38 %added for plotting by Ravesh
         B8
         B7
         B38
