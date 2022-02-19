@@ -243,16 +243,24 @@ function [outStruct,outTable] = extractActivation(aplysia,tname)
     title(tname);
     outStruct.t = [aplysia.StartingTime:aplysia.TimeStep:aplysia.EndTime];
     outStruct.newT = [aplysia.StartingTime:aplysia.TimeStep/2:aplysia.EndTime]; %resample time for interpolation at higher (or lower) sample rate
+
+    fileID = fopen(tname+'.txt','w');
+
+
+    fprintf(fileID,"Time(s): "+ strjoin(string(outStruct.newT),',')+"\n");
     
     for i =1:length(activationNames)
         outStruct.(activationNames{i}) = aplysia.(activationNames{i});
         outStruct.(activationNames{i}+"_interpl") = interp1(outStruct.t,outStruct.(activationNames{i}),outStruct.newT);
+        %fprintf(fileID,activationNames{i}+"_interpl"+":"+outStruct.(activationNames{i}+"_interpl")+"\n");
         outStruct.(activationNames{i}+"_string") = "float " + activationNames{i} +"[" + string(length(outStruct.newT))+"] ={"+strjoin(string(outStruct.(activationNames{i}+"_interpl")), ' , ')+"};";
-
+        fprintf(fileID,outStruct.(activationNames{i}+"_string")+"\n");
+           
         outStruct.(NeuralNames{i}+"_interpl") = interp1(outStruct.t,outStruct.(activationNames{i}),outStruct.newT);
         outStruct.(NeuralNames{i}+"_string_interp") = "float " + NeuralNames{i} +"[" + string(length(outStruct.newT))+"] ={"+strjoin(string(outStruct.(NeuralNames{i}+"_interpl")), ' , ')+"};"; %interpolated neural activity...may not be 0 or 1
+        %fprintf(fileID,NeuralNames{i}+"_interpl"+":"+outStruct.(NeuralNames{i}+"_interpl") +"\n");
         outStruct.(NeuralNames{i}+"_string") = "float " + NeuralNames{i} +"[" + string(length(outStruct.t))+"] ={"+strjoin(string(aplysia.(NeuralNames{i})), ' , ')+"};"; %original neural activity
-
+        fprintf(fileID,outStruct.(NeuralNames{i}+"_string") +"\n");
      
         ax1=subplot(length(activationNames),1,i);
         hold(ax1,'on');      
@@ -266,7 +274,10 @@ function [outStruct,outTable] = extractActivation(aplysia,tname)
 
     end
 
-    outTable = table(aplysia.B8,aplysia.A_I4,aplysia.P_I4,aplysia.B6B9B3,aplysia.A_I3,aplysia.T_I3,aplysia.B6B9B3_B38,aplysia.A_I3_anterior,aplysia.P_I3_anterior,aplysia.B31B32,aplysia.A_I2,aplysia.T_I2,aplysia.B7,aplysia.A_hinge,aplysia.T_hinge);
+    fclose(fileID);
+
+    outTable = table(outStruct.t',aplysia.B8',aplysia.A_I4',aplysia.P_I4',aplysia.B6B9B3',aplysia.A_I3',aplysia.T_I3',aplysia.B6B9B3_B38',aplysia.A_I3_anterior',aplysia.P_I3_anterior',aplysia.B31B32',aplysia.A_I2',aplysia.T_I2',aplysia.B7',aplysia.A_hinge',aplysia.T_hinge',aplysia.B64',aplysia.B44B48');
+    outTable.Properties.VariableNames={'t','B8','AI4','PI4','B6B9B3','AI3','TI3','B6B9B3_B38','AI3_2','PI3','B31B32','AI2', 'TI2', 'B7', 'A_hinge','T_hinge', 'B64','B44B48'};
     writetable(outTable,tname+".csv",'Delimiter',',');
 
     saveas(gcf,tname+" Plots");

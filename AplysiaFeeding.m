@@ -2,7 +2,7 @@ classdef AplysiaFeeding
     %%
     properties        
         %Timing variables
-        TimeStep = 0.02;            %time step in seconds
+        TimeStep = 0.05;            %time step in seconds
         StartingTime = 0;           %simulation start time (in seconds)
         EndTime = 40;               %simulation end time (in seconds)
         
@@ -72,6 +72,7 @@ classdef AplysiaFeeding
         B40B30
         B31B32
         B6B9B3
+        B6B9B3_B38 %added for plotting by Ravesh
         B8
         B7
         B38
