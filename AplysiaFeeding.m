@@ -2,7 +2,7 @@ classdef AplysiaFeeding
     %%
     properties        
         %Timing variables
-        TimeStep = 0.05;            %time step in seconds
+        TimeStep = 0.02;            %time step in seconds
         StartingTime = 0;           %simulation start time (in seconds)
         EndTime = 40;               %simulation end time (in seconds)
         
@@ -72,11 +72,12 @@ classdef AplysiaFeeding
         B40B30
         B31B32
         B6B9B3
-        B6B9B3_B38 %added for plotting by Ravesh
         B8
         B7
         B38
         B20
+        B43B45 % I1 innervation
+        B44B48 % radular opener innervation
         
         %neural timing variables
         refractory_CBI3 = 5000;                 %refractory period (in milliseconds) of CBI3 post strong B4B5 excitation
@@ -112,7 +113,7 @@ classdef AplysiaFeeding
         sens_mechanical_grasper
         
         %switches
-        use_hypothesized_connections = 0; %1 = yes, 0 = no
+        use_hypothesized_connections = 1; %1 = yes, 0 = no
         
         %stimulation electrodes
         stim_B4B5 %0 = off, 1 = on
@@ -141,6 +142,8 @@ classdef AplysiaFeeding
             obj.B7 = zeros(1,nt);
             obj.B38 = zeros(1,nt);
             obj.B20 = zeros(1,nt);
+            obj.B43B45 = zeros(1,nt);
+            obj.B44B48 = zeros(1,nt);
 
             %muscle state variables
             obj.P_I4 = zeros(1,nt);
@@ -637,6 +640,18 @@ classdef AplysiaFeeding
                 obj.B38(j+1)=obj.MCC(j)*(obj.sens_mechanical_grasper(j))*(...
                     (obj.CBI3(j))*(... % if CBI3 active do the following:
                         ((x_gh)<obj.thresh_B38_retract)));
+                    
+                %% Update B43B45: 
+                % Active if odontophore in the retraction phase (indicated
+                % by B64
+                
+                obj.B43B45(j+1) = obj.MCC(j)*obj.B64(j);
+                
+                %% Update B44B48:
+                % Active during protraction in ingestive behaviors and
+                % during retraction in egestive behaviors
+                
+                obj.B44B48(j+1) = obj.MCC(j)*( obj.CBI3(j)*(~obj.B64(j)) + (~obj.CBI3(j))*obj.B64(j) );
 
                 %% Update I4: If food present, and grasper closed, then approaches
                 % max pressure 
@@ -958,19 +973,19 @@ classdef AplysiaFeeding
         function generatePlots(obj,label,xlimits)
             t=obj.StartingTime:obj.TimeStep:obj.EndTime;
 
-            figure('Position', [10 10 1200 600]);
+            figure('Position', [10 10 1200 800]);
             set(gcf,'Color','white')
             xl=xlimits; % show full time scale
             ymin = 0;
             ymax = 1;
-            shift = 0.0475;%0.04;
+            shift = 0.0425;%0.0475;
             top = 0.95;
             i=0;
             left = 0.25;
             width = 0.7;
             height = 0.02;
 
-            subplot(15,1,1)
+            subplot(17,1,1)
             %External Stimuli
             subplot('position',[left top width height])
             i=i+1;
@@ -1190,7 +1205,7 @@ classdef AplysiaFeeding
 
             subplot('position',[left top-i*shift width height])
             plot(t,obj.B7,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
-            i=i+2.5;
+            i=i+1;
             set(gca,'FontSize',16)
             set(gca,'xtick',[])
             set(gca,'ytick',[0,1])
@@ -1202,11 +1217,39 @@ classdef AplysiaFeeding
             set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
             set(gca,'XColor','none')
 
+            % Adding in the two new neurons
+            subplot('position',[left top-i*shift width height])
+            plot(t,obj.B43B45,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
+            i=i+1;
+            set(gca,'FontSize',16)
+            set(gca,'xtick',[])
+            set(gca,'ytick',[0,1])
+            set(gca,'YTickLabel',[]);
+            ylabel('B43B45', 'Color', [56/255, 167/255, 182/255])
+            ylim([ymin ymax])
+            xlim(xl)
+            hYLabel = get(gca,'YLabel');
+            set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
+            set(gca,'XColor','none')
+           
+            subplot('position',[left top-i*shift width height])
+            plot(t,obj.B44B48,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
+            i=i+2.5;
+            set(gca,'FontSize',16)
+            set(gca,'xtick',[])
+            set(gca,'ytick',[0,1])
+            set(gca,'YTickLabel',[]);
+            ylabel('B44B48', 'Color', [56/255, 167/255, 182/255])
+            ylim([ymin ymax])
+            xlim(xl)
+            hYLabel = get(gca,'YLabel');
+            set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
+            set(gca,'XColor','none') 
 
             %Determine locations of protraction retraction boxes
             tstep = obj.TimeStep;
-            startnum = round(xl(1)/tstep);
-            endnum = round(xl(2)/tstep);
+            startnum = ceil(xl(1)/tstep);
+            endnum = floor(xl(2)/tstep);
             grasper_rel_pos = (obj.x_g-obj.x_h);
             numProtractionBoxes = 0;
             numRetractionBoxes = 0;
@@ -1276,14 +1319,16 @@ classdef AplysiaFeeding
             set(gca,'XColor','none')
 
             hold on
-            for retract = 1:length(retractionRectangles)
+            m = size(retractionRectangles);
+            for retract = 1:m(1)
             h=rectangle('Position', [retractionRectangles(retract,1)*tstep 1.25 (retractionRectangles(retract,2)-retractionRectangles(retract,1))*tstep 0.1]);  
             h.FaceColor = 'black';
             end
             hold off
 
             hold on
-            for protract = 1:length(protractionRectangles)
+            n = size(protractionRectangles);
+            for protract = 1:n(1)
             h=rectangle('Position', [protractionRectangles(protract,1)*tstep 1.25 (protractionRectangles(protract,2)-protractionRectangles(protract,1))*tstep 0.1]);  
             h.FaceColor = 'white';
             end

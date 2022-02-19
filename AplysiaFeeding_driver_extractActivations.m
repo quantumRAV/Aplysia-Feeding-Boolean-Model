@@ -235,9 +235,9 @@ function [outStruct,outTable] = extractActivation(aplysia,tname)
 
     %aplysia.B6B9B3_B38 = aplysia.B6B9B3+aplysia.B38;
     aplysia.B6B9B3_B38 = aplysia.B6B9B3 + aplysia.B38;
-    activationNames={'A_I4','A_I3','A_I3_anterior','A_I2','A_hinge'};
-    forceNames={'P_I4','T_I3','P_I3_anterior','T_I2','T_hinge'};
-    NeuralNames={'B8','B6B9B3','B6B9B3_B38','B31B32','B7'};
+    activationNames={'A_I4','A_I3','A_I3_anterior','A_I2','A_hinge','A_I4','A_I3'};
+    forceNames={'P_I4','T_I3','P_I3_anterior','T_I2','T_hinge','P_I4','T_I3'};
+    NeuralNames={'B8','B6B9B3','B6B9B3_B38','B31B32','B7','B44B48','B64'};
 
     figure()
     title(tname);
