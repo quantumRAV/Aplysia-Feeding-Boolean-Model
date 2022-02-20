@@ -2,7 +2,7 @@ classdef AplysiaFeeding
     %%
     properties        
         %Timing variables
-        TimeStep = 0.05;            %time step in seconds
+        TimeStep = 0.02;            %time step in seconds
         StartingTime = 0;           %simulation start time (in seconds)
         EndTime = 40;               %simulation end time (in seconds)
         
@@ -62,6 +62,10 @@ classdef AplysiaFeeding
         
         thresh_B38_retract = 0.4;
         
+        thresh_B10_on = 0.75;
+        thresh_B10_off_swallow = 0.85;
+        thresh_B10_off_BR = 0.9;
+        
         %neural state variables
         MCC
         CBI2
@@ -72,17 +76,25 @@ classdef AplysiaFeeding
         B40B30
         B31B32
         B6B9B3
-        B6B9B3_B38 %added for plotting by Ravesh
         B8
         B7
         B38
         B20
         B43B45 % I1 innervation
         B44B48 % radular opener innervation
+        B6 % isolated B6 neuron
+        B9 % isolated B9 neuron
+        B10
+        B6B9B3_B38 %added for extracting later
+        B6B9_B10 %added for extracting later
         
         %neural timing variables
         refractory_CBI3 = 5000;                 %refractory period (in milliseconds) of CBI3 post strong B4B5 excitation
         postActivityExcitation_B40B30 = 3000;   %time (in milliseconds) post B40B30 activity that slow excitation lasts
+        
+        % delay times for B6 and B9 (MB)
+        B6_delayTime = 0.5; % [s]
+        B9_delayTime = 1; % [s]
         
         %muscle state variables
         P_I4
@@ -145,6 +157,9 @@ classdef AplysiaFeeding
             obj.B20 = zeros(1,nt);
             obj.B43B45 = zeros(1,nt);
             obj.B44B48 = zeros(1,nt);
+            obj.B6 = zeros(1,nt);
+            obj.B9 = zeros(1,nt);
+            obj.B10 = zeros(1,nt);
 
             %muscle state variables
             obj.P_I4 = zeros(1,nt);
@@ -216,6 +231,7 @@ classdef AplysiaFeeding
             CBI3_stimOFF = 0;
             CBI3_refractory = 0;
             B40B30_offTime = 0;
+            B6B9B3_exciteTime = inf; % added for the robot; last time B6B9B3 was rising
             unbroken = 1; %tracking variable to keep track of seaweed being broken off during feeding
 
             %% Main Loop
@@ -553,6 +569,25 @@ classdef AplysiaFeeding
                                 +...
                                 (~obj.CBI3(j))*... rejection
                                     (~(obj.P_I4(j)>obj.thresh_B6B9B3_reject_pressure)));
+                if((obj.B6B9B3(j+1)==1)*(obj.B6B9B3(j)==0))
+                    % if B6B9B3 just turned on, capture the time
+                    %disp(j+1)
+                    B6B9B3_exciteTime = j+1;
+                end
+                
+                %% Update B6
+                % added in for the robot
+                % active if the B6B9B3 motor pool is active and there has
+                % been sufficient delay between that activation
+                
+                obj.B6(j+1) = obj.B6B9B3(j)*((j-B6B9B3_exciteTime)*obj.TimeStep > obj.B6_delayTime);
+                
+                
+                %% Update B9
+                % added in for the robot
+                % active if the B6B9B3 motor pool is active and there has
+                % been sufficient delay between that activation
+                obj.B9(j+1) = obj.B6B9B3(j)*((j-B6B9B3_exciteTime)*obj.TimeStep > obj.B9_delayTime);
 
 
                 %% Update B8a/b
@@ -654,6 +689,14 @@ classdef AplysiaFeeding
                 
                 obj.B44B48(j+1) = obj.MCC(j)*( obj.CBI3(j)*(~obj.B64(j)) + (~obj.CBI3(j))*obj.B64(j) );
 
+                
+                %% Update B10:
+                % Active when I2 approaches limit and until peak
+                % protraction is reached.
+                
+                obj.B10(j+1) = obj.MCC(j)*(x_gh>obj.thresh_B10_on)*(obj.B31B32(j))*(~obj.B64(j));
+                
+                
                 %% Update I4: If food present, and grasper closed, then approaches
                 % max pressure 
                 obj.P_I4(j+1)=((obj.tau_I4*obj.P_I4(j)+obj.A_I4(j)*obj.TimeStep)/(obj.tau_I4+obj.TimeStep));%old -- keep this version
@@ -979,7 +1022,7 @@ classdef AplysiaFeeding
             xl=xlimits; % show full time scale
             ymin = 0;
             ymax = 1;
-            shift = 0.0425;%0.0475;
+            shift = 0.0325;%0.0475;
             top = 0.95;
             i=0;
             left = 0.25;
@@ -1203,7 +1246,36 @@ classdef AplysiaFeeding
             set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
             set(gca,'XColor','none')
 
-
+            subplot('position',[left top-i*shift width height])
+            plot(t,obj.B6,'LineWidth',2, 'Color', [90/255, 155/255, 197/255]) % B6/9/3
+            i=i+1;
+            set(gca,'FontSize',16)
+            set(gca,'xtick',[])
+            set(gca,'ytick',[0,1])
+            set(gca,'YTickLabel',[]);
+            ylabel('B6', 'Color', [90/255, 155/255, 197/255])
+            ylim([ymin ymax])
+            xlim(xl)
+            set(get(gca,'ylabel'),'rotation',0) 
+            hYLabel = get(gca,'YLabel');
+            set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
+            set(gca,'XColor','none')
+            
+            subplot('position',[left top-i*shift width height])
+            plot(t,obj.B9,'LineWidth',2, 'Color', [90/255, 155/255, 197/255]) % B6/9/3
+            i=i+1;
+            set(gca,'FontSize',16)
+            set(gca,'xtick',[])
+            set(gca,'ytick',[0,1])
+            set(gca,'YTickLabel',[]);
+            ylabel('B9', 'Color', [90/255, 155/255, 197/255])
+            ylim([ymin ymax])
+            xlim(xl)
+            set(get(gca,'ylabel'),'rotation',0) 
+            hYLabel = get(gca,'YLabel');
+            set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
+            set(gca,'XColor','none')
+            
             subplot('position',[left top-i*shift width height])
             plot(t,obj.B7,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
             i=i+1;
@@ -1235,7 +1307,7 @@ classdef AplysiaFeeding
            
             subplot('position',[left top-i*shift width height])
             plot(t,obj.B44B48,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
-            i=i+2.5;
+            i=i+1;
             set(gca,'FontSize',16)
             set(gca,'xtick',[])
             set(gca,'ytick',[0,1])
@@ -1247,6 +1319,20 @@ classdef AplysiaFeeding
             set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
             set(gca,'XColor','none') 
 
+            subplot('position',[left top-i*shift width height])
+            plot(t,obj.B10,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
+            i=i+2.5;
+            set(gca,'FontSize',16)
+            set(gca,'xtick',[])
+            set(gca,'ytick',[0,1])
+            set(gca,'YTickLabel',[]);
+            ylabel('B10', 'Color', [56/255, 167/255, 182/255])
+            ylim([ymin ymax])
+            xlim(xl)
+            hYLabel = get(gca,'YLabel');
+            set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
+            set(gca,'XColor','none') 
+            
             %Determine locations of protraction retraction boxes
             tstep = obj.TimeStep;
             startnum = ceil(xl(1)/tstep);
