@@ -2,7 +2,7 @@ classdef AplysiaFeeding
     %%
     properties        
         %Timing variables
-        TimeStep = 0.02;            %time step in seconds
+        TimeStep = 0.05;            %time step in seconds
         StartingTime = 0;           %simulation start time (in seconds)
         EndTime = 40;               %simulation end time (in seconds)
         
@@ -65,6 +65,44 @@ classdef AplysiaFeeding
         thresh_B10_on = 0.75;
         thresh_B10_off_swallow = 0.85;
         thresh_B10_off_BR = 0.9;
+
+        thresh_BI3_6_on_protract = 0.8;
+        thresh_BI3_6_off_protract = 0.7;
+
+        thresh_BI3_5_on_protract = 0.7;
+        thresh_BI3_5_off_protract = 0.6;
+
+        thresh_BI3_4_on_protract = 0.6;
+        thresh_BI3_4_off_protract = 0.5;
+
+        thresh_BI3_3_on_protract = 0.5;
+        thresh_BI3_3_off_protract = 0.4;
+
+        thresh_BI3_2_on_protract = 0.4;
+        thresh_BI3_2_off_protract = 0.3;
+
+        thresh_BI3_1_on_protract = 0.3;
+        thresh_BI3_1_off_protract = 0.2;
+
+        thresh_BI3_6_on_retract = 0.8;
+        thresh_BI3_6_off_retract = 0.7;
+
+        thresh_BI3_5_on_retract = 0.7;
+        thresh_BI3_5_off_retract = 0.6;
+
+        thresh_BI3_4_on_retract = 0.6;
+        thresh_BI3_4_off_retract = 0.5;
+
+        thresh_BI3_3_on_retract = 0.5;
+        thresh_BI3_3_off_retract = 0.4;
+
+        thresh_BI3_2_on_retract = 0.4;
+        thresh_BI3_2_off_retract = 0.3;
+
+        thresh_BI3_1_on_retract = 0.3;
+        thresh_BI3_1_off_retract = 0.2;
+
+
         
         %neural state variables
         MCC
@@ -87,6 +125,12 @@ classdef AplysiaFeeding
         B10
         B6B9B3_B38 %added for extracting later
         B6B9_B10 %added for extracting later
+        BI3_1
+        BI3_2
+        BI3_3
+        BI3_4
+        BI3_5
+        BI3_6
         
         %neural timing variables
         refractory_CBI3 = 5000;                 %refractory period (in milliseconds) of CBI3 post strong B4B5 excitation
@@ -160,6 +204,13 @@ classdef AplysiaFeeding
             obj.B6 = zeros(1,nt);
             obj.B9 = zeros(1,nt);
             obj.B10 = zeros(1,nt);
+            obj.BI3_1 = zeros(1,nt);
+            obj.BI3_2 = zeros(1,nt);
+            obj.BI3_3 = zeros(1,nt);
+            obj.BI3_4 = zeros(1,nt);
+            obj.BI3_5 = zeros(1,nt);
+            obj.BI3_6 = zeros(1,nt);
+
 
             %muscle state variables
             obj.P_I4 = zeros(1,nt);
@@ -695,6 +746,17 @@ classdef AplysiaFeeding
                 % protraction is reached.
                 
                 obj.B10(j+1) = obj.MCC(j)*(x_gh>obj.thresh_B10_on)*(obj.B31B32(j))*(~obj.B64(j));
+
+
+                %% Update B_I3:
+                % to simulate peristaltic motion
+                
+                obj.BI3_1(j+1) = obj.MCC(j)*((obj.B31B32(j))*(~obj.B64(j))*(x_gh<=obj.thresh_BI3_1_on_protract & x_gh>=obj.thresh_BI3_1_off_protract) + obj.B6B9B3(j)*(x_gh<=obj.thresh_BI3_1_on_retract & x_gh>=obj.thresh_BI3_1_off_retract));
+                obj.BI3_2(j+1) = obj.MCC(j)*((obj.B31B32(j))*(~obj.B64(j))*(x_gh<=obj.thresh_BI3_2_on_protract & x_gh>=obj.thresh_BI3_2_off_protract) + obj.B6B9B3(j)*(x_gh<=obj.thresh_BI3_2_on_retract & x_gh>=obj.thresh_BI3_2_off_retract));
+                obj.BI3_3(j+1) = obj.MCC(j)*((obj.B31B32(j))*(~obj.B64(j))*(x_gh<=obj.thresh_BI3_3_on_protract & x_gh>=obj.thresh_BI3_3_off_protract) + obj.B6B9B3(j)*(x_gh<=obj.thresh_BI3_3_on_retract & x_gh>=obj.thresh_BI3_3_off_retract));
+                obj.BI3_4(j+1) = obj.MCC(j)*((obj.B31B32(j))*(~obj.B64(j))*(x_gh<=obj.thresh_BI3_4_on_protract & x_gh>=obj.thresh_BI3_4_off_protract) + obj.B6B9B3(j)*(x_gh<=obj.thresh_BI3_4_on_retract & x_gh>=obj.thresh_BI3_4_off_retract));
+                obj.BI3_5(j+1) = obj.MCC(j)*((obj.B31B32(j))*(~obj.B64(j))*(x_gh<=obj.thresh_BI3_5_on_protract & x_gh>=obj.thresh_BI3_5_off_protract) + obj.B6B9B3(j)*(x_gh<=obj.thresh_BI3_5_on_retract & x_gh>=obj.thresh_BI3_5_off_retract));
+                obj.BI3_6(j+1) = obj.MCC(j)*((obj.B31B32(j))*(~obj.B64(j))*(x_gh<=obj.thresh_BI3_6_on_protract & x_gh>=obj.thresh_BI3_6_off_protract) + obj.B6B9B3(j)*(x_gh<=obj.thresh_BI3_6_on_retract & x_gh>=obj.thresh_BI3_6_off_retract));
                 
                 
                 %% Update I4: If food present, and grasper closed, then approaches
@@ -1029,7 +1091,7 @@ classdef AplysiaFeeding
             width = 0.7;
             height = 0.02;
 
-            subplot(17,1,1)
+            subplot(23,1,1)
             %External Stimuli
             subplot('position',[left top width height])
             i=i+1;
@@ -1321,12 +1383,96 @@ classdef AplysiaFeeding
 
             subplot('position',[left top-i*shift width height])
             plot(t,obj.B10,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
-            i=i+2.5;
+            i=i+1;
             set(gca,'FontSize',16)
             set(gca,'xtick',[])
             set(gca,'ytick',[0,1])
             set(gca,'YTickLabel',[]);
             ylabel('B10', 'Color', [56/255, 167/255, 182/255])
+            ylim([ymin ymax])
+            xlim(xl)
+            hYLabel = get(gca,'YLabel');
+            set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
+            set(gca,'XColor','none') 
+
+            subplot('position',[left top-i*shift width height])
+            plot(t,obj.BI3_1,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
+            i=i+1;
+            set(gca,'FontSize',16)
+            set(gca,'xtick',[])
+            set(gca,'ytick',[0,1])
+            set(gca,'YTickLabel',[]);
+            ylabel('BI3_1', 'Color', [56/255, 167/255, 182/255])
+            ylim([ymin ymax])
+            xlim(xl)
+            hYLabel = get(gca,'YLabel');
+            set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
+            set(gca,'XColor','none') 
+
+            subplot('position',[left top-i*shift width height])
+            plot(t,obj.BI3_2,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
+            i=i+1;
+            set(gca,'FontSize',16)
+            set(gca,'xtick',[])
+            set(gca,'ytick',[0,1])
+            set(gca,'YTickLabel',[]);
+            ylabel('BI3_2', 'Color', [56/255, 167/255, 182/255])
+            ylim([ymin ymax])
+            xlim(xl)
+            hYLabel = get(gca,'YLabel');
+            set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
+            set(gca,'XColor','none') 
+
+            subplot('position',[left top-i*shift width height])
+            plot(t,obj.BI3_3,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
+            i=i+1;
+            set(gca,'FontSize',16)
+            set(gca,'xtick',[])
+            set(gca,'ytick',[0,1])
+            set(gca,'YTickLabel',[]);
+            ylabel('BI3_3', 'Color', [56/255, 167/255, 182/255])
+            ylim([ymin ymax])
+            xlim(xl)
+            hYLabel = get(gca,'YLabel');
+            set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
+            set(gca,'XColor','none') 
+
+            subplot('position',[left top-i*shift width height])
+            plot(t,obj.BI3_4,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
+            i=i+1;
+            set(gca,'FontSize',16)
+            set(gca,'xtick',[])
+            set(gca,'ytick',[0,1])
+            set(gca,'YTickLabel',[]);
+            ylabel('BI3_4', 'Color', [56/255, 167/255, 182/255])
+            ylim([ymin ymax])
+            xlim(xl)
+            hYLabel = get(gca,'YLabel');
+            set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
+            set(gca,'XColor','none') 
+
+            subplot('position',[left top-i*shift width height])
+            plot(t,obj.BI3_5,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
+            i=i+1;
+            set(gca,'FontSize',16)
+            set(gca,'xtick',[])
+            set(gca,'ytick',[0,1])
+            set(gca,'YTickLabel',[]);
+            ylabel('BI3_5', 'Color', [56/255, 167/255, 182/255])
+            ylim([ymin ymax])
+            xlim(xl)
+            hYLabel = get(gca,'YLabel');
+            set(hYLabel,'rotation',0,'VerticalAlignment','middle','HorizontalAlignment','right','Position',get(hYLabel,'Position')-[0.05 0 0])
+            set(gca,'XColor','none') 
+
+            subplot('position',[left top-i*shift width height])
+            plot(t,obj.BI3_6,'LineWidth',2, 'Color', [56/255, 167/255, 182/255]) % B7
+            i=i+1;
+            set(gca,'FontSize',16)
+            set(gca,'xtick',[])
+            set(gca,'ytick',[0,1])
+            set(gca,'YTickLabel',[]);
+            ylabel('BI3_6', 'Color', [56/255, 167/255, 182/255])
             ylim([ymin ymax])
             xlim(xl)
             hYLabel = get(gca,'YLabel');

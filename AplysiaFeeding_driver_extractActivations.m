@@ -236,7 +236,7 @@ function [outStruct,outTable] = extractActivation(aplysia,tname)
 
     aplysia.B6B9B3_B38 = aplysia.B6B9B3 + aplysia.B38;
     aplysia.B6B9_B10 = aplysia.B6|aplysia.B10;
-    
+
     activationNames={'A_I4','A_I3','A_I3_anterior','A_I2','A_hinge','A_I4','A_I3','T_I3','T_I3','T_I3','T_I3'};
     forceNames={'P_I4','T_I3','P_I3_anterior','T_I2','T_hinge','P_I4','T_I3','T_I3','T_I3','T_I3','T_I3'};
     NeuralNames={'B8','B6B9B3','B6B9B3_B38','B31B32','B7','B44B48','B64','B6','B9','B10','B6B9_B10'};
@@ -259,9 +259,9 @@ function [outStruct,outTable] = extractActivation(aplysia,tname)
         fprintf(fileID,outStruct.(activationNames{i}+"_string")+"\n\n\n");
            
         outStruct.(NeuralNames{i}+"_interpl") = interp1(outStruct.t,outStruct.(activationNames{i}),outStruct.newT);
-        outStruct.(NeuralNames{i}+"_string_interp") = "float " + NeuralNames{i} +"[" + string(length(outStruct.newT))+"] ={"+strjoin(string(outStruct.(NeuralNames{i}+"_interpl")), ' , ')+"};"; %interpolated neural activity...may not be 0 or 1
+        outStruct.(NeuralNames{i}+"_string_interp") = "bool " + NeuralNames{i} +"[" + string(length(outStruct.newT))+"] ={"+strjoin(string(outStruct.(NeuralNames{i}+"_interpl")), ' , ')+"};"; %interpolated neural activity...may not be 0 or 1
         %fprintf(fileID,NeuralNames{i}+"_interpl"+":"+outStruct.(NeuralNames{i}+"_interpl") +"\n\n\n");
-        outStruct.(NeuralNames{i}+"_string") = "float " + NeuralNames{i} +"[" + string(length(outStruct.t))+"] ={"+strjoin(string(aplysia.(NeuralNames{i})), ' , ')+"};"; %original neural activity
+        outStruct.(NeuralNames{i}+"_string") = "bool " + NeuralNames{i} +"[" + string(length(outStruct.t))+"] ={"+strjoin(string(aplysia.(NeuralNames{i})), ' , ')+"};"; %original neural activity
         fprintf(fileID,outStruct.(NeuralNames{i}+"_string") +"\n\n\n");
      
         ax1=subplot(length(activationNames),1,i);
